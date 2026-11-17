@@ -224,14 +224,6 @@
         "com.unity.modules.physics": "1.0.0"
       }
     },
-    "com.unitymcp.bridge": {
-      "version": "file:com.unitymcp.bridge",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.unity.nuget.newtonsoft-json": "3.2.1"
-      }
-    },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
       "depth": 0,

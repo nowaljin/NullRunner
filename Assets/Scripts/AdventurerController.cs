@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
-using UnityEditor;
+using System.IO;
 
 public class AdventurerController : MonoBehaviour
 {
@@ -9,8 +9,9 @@ public class AdventurerController : MonoBehaviour
     public float animFrameTime = 0.11f;
 
     SpriteRenderer sr;
-    Rigidbody2D rb;
+    Rigidbody rb;
     Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
+    List<Texture2D> keep = new List<Texture2D>();
 
     Vector2 moveInput;
     string yon = "Down";
@@ -21,20 +22,43 @@ public class AdventurerController : MonoBehaviour
     float jumpTimer = 0f;
     float dashTimer = 0f;
 
-    static readonly string[] AnimKeys = { "Idle", "walk", "Dash", "death", "Jump" };
+    static readonly string[] AnimNames = { "idle", "walk", "dash", "death", "jump" };
 
     void Start()
     {
         sr = GetComponent<SpriteRenderer>();
-        rb = GetComponent<Rigidbody2D>();
-        string[] folders = { "Walk", "Idle", "Dash", "Death", "Jump - NEW/Normal", "Shadow" };
-        foreach (var f in folders)
+        rb = GetComponent<Rigidbody>();
+        var root = Application.dataPath + "/Sprites/AdventurerFemale";
+        foreach (var path in Directory.GetFiles(root, "*.png", SearchOption.AllDirectories))
         {
-            var path = "Assets/Sprites/AdventurerFemale/" + f;
-            foreach (var o in AssetDatabase.LoadAllAssetsAtPath(path))
-                if (o is Sprite s) sprites[s.name] = s;
+            var parts = Path.GetFileNameWithoutExtension(path).Split('_');
+            string a = parts[0].ToLowerInvariant();
+            if (System.Array.IndexOf(AnimNames, a) < 0) continue;
+            string y = parts.Length > 1 ? string.Join("_", parts, 1, parts.Length - 1) : "Down";
+            var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            tex.LoadImage(File.ReadAllBytes(path));
+            tex.Apply();
+            tex.filterMode = FilterMode.Point;
+            keep.Add(tex);
+            int n = tex.width / 48;
+            for (int i = 0; i < n; i++)
+            {
+                var spr = Sprite.Create(tex, new Rect(i * 48, 0, 48, 64), new Vector2(0.5f, 0.5f), 64f);
+                sprites[a + "_" + y + "_" + i] = spr;
+            }
         }
-        Debug.Log("[Adventurer] sprite yuklendi: " + sprites.Count);
+        Debug.Log("[Adventurer] sprite: " + sprites.Count);
+
+        var shadowTex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+        shadowTex.LoadImage(File.ReadAllBytes(Application.dataPath + "/Sprites/AdventurerFemale/Shadow.png"));
+        shadowTex.Apply();
+        keep.Add(shadowTex);
+        var shadowGO = new GameObject("GroundShadow");
+        shadowGO.transform.SetParent(transform);
+        shadowGO.transform.localPosition = new Vector3(0f, -0.5f, 0f);
+        var ss = shadowGO.AddComponent<SpriteRenderer>();
+        ss.sprite = Sprite.Create(shadowTex, new Rect(0, 0, shadowTex.width, shadowTex.height), new Vector2(0.5f, 0.5f), 64f);
+        ss.color = new Color(0f, 0f, 0f, 0.45f);
     }
 
     void Update()
@@ -64,10 +88,10 @@ public class AdventurerController : MonoBehaviour
 
         timer += Time.deltaTime;
         frame = (int)(timer / animFrameTime);
-        if (dead) frame = Mathf.Min(frame, 5);
-        else frame %= 6;
+        if (dead) frame = Mathf.Min(frame, 7);
+        else frame %= 8;
 
-        string key = AnimKeys[System.Array.IndexOf(AnimKeys, anim)] + "_" + yon + "_" + frame;
+        string key = anim + "_" + yon + "_" + frame;
         if (sprites.ContainsKey(key)) sr.sprite = sprites[key];
     }
 
@@ -75,7 +99,7 @@ public class AdventurerController : MonoBehaviour
     {
         Vector2 v = moveInput;
         if (dashTimer > 0f) v *= 2.2f;
-        rb.linearVelocity = v * moveSpeed;
+        rb.linearVelocity = new Vector3(v.x * moveSpeed, 0f, v.y * moveSpeed);
     }
 
     string YonBul(Vector2 v)
