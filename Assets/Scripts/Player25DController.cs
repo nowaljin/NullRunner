@@ -7,7 +7,7 @@ public class Player25DController : MonoBehaviour
 {
     public float moveSpeed = 4f;
     public float animFps = 10f;
-    public float ppu = 128f;
+    public float ppu = 96f;
 
     SpriteRenderer sr;
     Rigidbody rb;

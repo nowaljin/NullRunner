@@ -97,6 +97,10 @@ public class AdventurerController : MonoBehaviour
 
     void FixedUpdate()
     {
+        var cc = GetComponent<CombatController>();
+        if (cc != null && cc.movementLocked) { rb.linearVelocity = Vector3.zero; return; }
+        const float GROUND_Y = 0.9f;
+        transform.position = new Vector3(transform.position.x, GROUND_Y, transform.position.z);
         Vector2 v = moveInput;
         if (dashTimer > 0f) v *= 2.2f;
         rb.linearVelocity = new Vector3(v.x * moveSpeed, 0f, v.y * moveSpeed);
